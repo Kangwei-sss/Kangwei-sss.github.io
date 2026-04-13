@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>台球记分</title>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "PingFang SC","Microsoft YaHei",sans-serif;
+}
+body {
+  background: #f5f5f5;
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+  transition: none;
+}
+body.lock-scroll {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+html.lock-scroll {
+  overflow: hidden !important;
+}
+.btn {padding: 10px 12px;margin: 6px;border: none;border-radius: 12px;font-size: 16px;cursor: pointer;}
+.top-fold-wrap{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-bottom:10px;
+  flex-wrap:nowrap;
+}
+.btn-fold-top{flex:1;max-width:none;min-width:0;}
+.btn-confirm{background:#2196F3;color:white;}
+.btn-toggle{background:#607d8b;color:white;}
+.btn-icon{background:#9c27b0;color:white;}
+.score-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px auto 15px;
+  max-width: 450px;
+}
+.score-btn {
+  background: #e91e63;
+  color: white;
+  min-width: unset;
+  width: calc((100% - 5 * 6px) / 6);
+  padding: 8px 2px;
+  font-size: 14px;
+  margin: 0;
+  border-radius: 10px;
+}
+.score-btn.selected {background: #c2185b;box-shadow: 0 0 0 3px #e91e63;font-weight: bold;}
+#totalArea, #roundScoreArea {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0;
+}
+.score-item {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+  padding: 6px;
+  white-space: normal;
+}
+.crown{
+  color: gold;
+  font-size: 20px;
+  margin-right: 4px;
+}
+.del-btn{background:#ff3333;color:#fff;font-size:14px;padding:4px 8px;border-radius:6px;border:none;margin-left:6px;cursor:pointer;}
+.preset-del-btn{background:#ff3333;color:#fff;font-size:14px;padding:4px 8px;border-radius:6px;border:none;margin-left:6px;cursor:pointer;}
+.preset-rename-input{width:auto;min-width:60px;max-width:220px;padding:4px 8px;font-size:14px;border-radius:4px;border:1px solid #ccc;margin-right:4px;}
+.toggle-detail-btn{background:#607d8b;color:#fff;font-size:14px;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;}
+.detail-toggle-btn{width:28px;height:28px;line-height:28px;text-align:center;background:#e0e0e0;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer;padding:0;margin-left:6px;}
+.setting-btn{background:#444;color:#fff;}
+.del-wrap{display:none;margin:10px auto;max-width:420px;padding:10px;background:#ffebee;border-radius:8px;}
+.search-wrap{margin:10px auto;max-width:420px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+#searchInput{width:70%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:16px;flex:1;min-width:140px;}
+#searchBtn{padding:10px 16px;background:#2196F3;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+.reset-search-btn{background:#909399;color:#fff;padding:10px 16px;border-radius:8px;margin:0;}
+.stat-card{background:#e8f5e9;padding:12px;border-radius:10px;margin:15px auto;max-width:420px;text-align:left;}
+.rank-card{
+  background:#fff;
+  padding:10px 14px;
+  border-radius:10px;
+  margin:8px 0;
+  max-width:420px;
+  text-align:left;
+  border-left:4px solid #00C853;
+  font-size:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.rank-card .right{
+  color:#666;
+  font-size:16px;
+}
+.chart-box{width:100%;height:16px;background:#eee;border-radius:8px;margin:8px 0;overflow:hidden;}
+.chart-bar{height:100%;background:#00C853;border-radius:8px;}
+.add-btn {background:#4CAF50;color:white;min-width:120px;}
+.ctrl-btn {background:#673ab7;color:white;}
+.fold-btn {background:#9c27b0;color:white;margin-bottom:10px;}
+.end-btn {background:#ff9800;color:white;max-width:400px;font-size:16px;}
+.archive-btn{background:#f44336;color:white;max-width:400px;font-size:16px;}
+.show-btn {background:#2196F3;color:white;margin-top:10px;}
+.box {border:1px solid #e0e0e0;border-radius:16px;padding:20px;margin:15px auto;max-width:450px;background:#fff;}
+.total-box{background:#2962ff;color:#fff;font-size:22px;}
+input {padding:8px 12px;font-size:16px;margin:4px;border-radius:8px;border:1px solid #ccc;text-align:center;}
+.small-input {width:60px;}
+.player-item {margin:10px 0;font-size:18px;}
+.archive-item{
+  border:1px solid #ccc;
+  border-radius:8px;
+  padding:10px;
+  margin:8px 0;
+  text-align:left;
+}
+.archive-action-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  justify-content: flex-start;
+}
+.preset-item{
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:10px;
+  margin:8px 0;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.preset-action-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.detail-wrap{margin-top:10px;padding:10px;background:#f9f9f9;border-radius:6px;display:none;}
+.round-item{border-bottom:1px dashed #ddd;padding:8px 0;}
+.tip-text{font-size:14px;color:#666;margin:8px 0;}
+.hide-panel{display:none !important;}
+.small-setting{width:32px;height:32px;font-size:16px;padding:0;margin:0;border-radius:8px;}
+#pinBtn{
+  position: fixed;
+  right: 12px;
+  bottom: 80px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #cd2626;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999 !important;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  user-select: none;
+}
+#cardMask{
+  position: fixed; left:0; top:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.85); z-index:999999;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  color:#fff; font-size:20px; font-weight:bold; padding:20px;
+}
+#cardTitle{margin-bottom:20px;}
+#cardArea{
+  display: flex; gap:12px; flex-wrap:wrap; justify-content:center;
+  max-width:400px;
+}
+.card{
+  width:70px; height:90px; background:#ff9800; color:#fff;
+  border-radius:12px; font-size:32px; font-weight:bold;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; user-select:none; transition:0.3s;
+  box-shadow:0 4px 10px rgba(255,153,0,0.5);
+}
+.card.flipped{background:#2196F3;}
+.card.disabled{pointer-events:none;}
+#closeCardBtn{
+  margin-top:20px; padding:10px 20px; background:#f44336; color:#fff;
+  border:none; border-radius:12px; font-size:16px; display:none;
+}
+#sortMenu{
+  position:absolute;
+  background:#fff;
+  border-radius:8px;
+  padding:6px 0;
+  box-shadow:0 2px 10px rgba(0,0,0,0.2);
+  z-index:99999;
+  display:none;
+  min-width:100px;
+}
+.sort-item{
+  padding:8px 12px;
+  font-size:15px;
+  cursor:pointer;
+  text-align:left;
+}
+.sort-item.active{
+  background:#444;
+  color:#fff;
+}
+#playerFullDetail{
+  position:fixed; left:0; top:0; width:100%; height:100%;
+  background:#f5f5f5; z-index:999999;
+  padding:20px; overflow:auto; display:none;
+}
+.player-detail-close{
+  position:fixed;
+  left:50%;
+  bottom:30px;
+  transform:translateX(-50%);
+  background:#444;
+  color:#fff;
+  border-radius:12px;
+  padding:12px 30px;
+  font-size:16px;
+  z-index:10;
+}
+#openPresetToolsBtn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #333;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#openPresetToolsBtn.preset-menu-open {
+  background: #444 !important;
+  color: #fff !important;
+}
+.preset-menu-box {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+#presetToolsMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 99;
+  min-width: 130px;
+  padding: 6px 0;
+  display: none;
+}
+.preset-tool-item {
+  padding: 8px 12px;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+.preset-tool-item:hover {
+  background: #f5f5f5;
+}
+#presetExportMask {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  z-index: 999999;
+}
+.export-box {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 380px;
+  width: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 15px;
+  text-align: left;
+}
+#importPresetInput {
+  display: none;
+}
+</style>
+</head>
+<body>
+<div id="pinBtn" title="点击锁定/解锁 | 长按拖动">📌</div>
+<h2 style="margin-bottom:15px;">台球记分</h2>
+<div class="top-fold-wrap">
+<button class="btn fold-btn btn-fold-top" onclick="togglePlayerBox()">玩家设置 <span id="foldPlayerIcon">▲</span></button>
+<button class="btn fold-btn btn-fold-top" onclick="toggleScoreBox()">加分档位 <span id="foldScoreIcon">▲</span></button>
+<button class="btn fold-btn btn-fold-top" onclick="togglePresetBox()">模式预设 <span id="foldPresetIcon">▲</span></button>
+</div>
+<div id="playerWrap" class="hide-panel">
+  <div class="box">
+    <h3>玩家人数设置(2~6人)</h3>
+    <button class="btn ctrl-btn" onclick="addPlayer()">➕ 增加玩家</button>
+    <button class="btn ctrl-btn" onclick="subPlayer()">➖ 减少玩家</button>
+    <span>当前在场：<strong id="pCount">3</strong> 人</span>
+  </div>
+  <div class="box">
+    <h3>编辑在场玩家（修改后点确认生效）</h3>
+    <div class="tip-text">抽卡片随机序号，自行认领顺序</div>
+    <div id="nameEditArea"></div>
+    <button class="btn btn-confirm" onclick="confirmPlayerChange()">✅ 确认修改玩家</button>
+    <button class="btn ctrl-btn" onclick="startCardDraw()" style="background:#ff9800;margin-left:8px;">🎲 抽顺序</button>
+  </div>
+</div>
+<div id="scoreWrap" class="hide-panel">
+  <div class="box">
+    <h3>加分档位(-10~10可调)</h3>
+    <button class="btn ctrl-btn" onclick="addScoreGear()">➕ 新增档位</button>
+    <button class="btn ctrl-btn" onclick="subScoreGear()">➖ 删除档位</button>
+    <p>当前选中：<strong id="nowScore">1</strong> 分</p>
+    <div id="scoreGearEdit"></div>
+  </div>
+</div>
+<div id="presetWrap" class="hide-panel">
+  <div class="box">
+    <h3>对局模式预设管理</h3>
+    <div class="tip-text">保存当前玩家配置快照，一键切换不同对局人员</div>
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;">
+      <button class="btn btn-confirm" onclick="saveCurrentToPreset()">💾 保存当前为新预设</button>
+      <div class="preset-menu-box">
+        <button id="openPresetToolsBtn">≡</button>
+        <div id="presetToolsMenu">
+          <div class="preset-tool-item" onclick="uploadPresetToCloud()">☁️ 上传预设到云端</div>
+          <div class="preset-tool-item" onclick="downloadPresetFromCloud()">☁️ 拉取云端预设</div>
+        </div>
+      </div>
+    </div>
+    <div id="presetListArea"></div>
+  </div>
+</div>
+<div class="box total-box"><h3>🔥 本场累计总分</h3><div id="totalArea"></div></div>
+<div class="box"><h3>📌 本局即时分数</h3><div id="roundScoreArea"></div></div>
+<div class="score-wrap" id="scoreBtnArea"></div>
+<div id="addBtnArea"></div>
+<button class="btn end-btn" onclick="endRound()">✅ 结算本局（封存当前对局）</button>
+<button class="btn archive-btn" onclick="saveMatchArchive()">💾 保存本场归档</button>
+<div class="top-fold-wrap" style="margin-top:10px;">
+<button class="btn btn-confirm" onclick="uploadLocalToCloud()">📤 上传本地数据到云端</button>
+<button class="btn show-btn" onclick="syncCloudToLocal()">📥 同步云端数据到本地</button>
+</div>
+<button class="btn btn-toggle" onclick="toggleHistoryPanel()"><span id="historyPanelText">📜 展开本局封存临时记录</span></button>
+<div class="box hide-panel" id="historyBox"><div id="historyList"></div></div>
+<button class="btn btn-toggle" onclick="toggleArchivePanel()"><span id="archivePanelText">📁 展开永久归档查询</span></button>
+<div class="box hide-panel" id="archiveBox">
+<div class="search-wrap">
+<input id="searchInput" placeholder="输入玩家名搜索">
+<button class="btn" onclick="doSearch()">🔍搜索</button>
+<button class="reset-search-btn" onclick="resetSearch()">重置</button>
+<button class="small-setting" onclick="toggleRank()" style="background:#ccc;color:#333" id="rankBtn">📊</button>
+<button class="small-setting" onclick="toggleManage()" style="background:#ccc;color:#333" id="manageBtn">⚙️</button>
+</div>
+<div id="statShow"></div>
+<div id="rankArea" class="hide-panel"></div>
+<div id="manageDelWrap" class="del-wrap">
+<button class="btn clear-all-btn" onclick="clearAllArchive()">⚠️ 清空归档</button>
+</div>
+<div id="archiveList"></div>
+</div>
+<div id="cardMask">
+  <div id="cardTitle">点击卡片抽取随机顺序</div>
+  <div id="cardArea"></div>
+  <button id="closeCardBtn" onclick="closeCardPanel()">完成关闭</button>
+</div>
+<div id="playerFullDetail">
+  <div id="playerDetailContent"></div>
+  <button class="player-detail-close" onclick="closePlayerDetail()">关闭</button>
+</div>
+<div id="sortMenu">
+  <div class="sort-item" data-key="win">胜率</div>
+  <div class="sort-item" data-key="round">局数</div>
+  <div class="sort-item" data-key="time">时长</div>
+  <div class="sort-item" data-key="streak">连胜</div>
+</div>
+<script>
+
+// ==============================================
+// 🔥 真·云端配置（GitHub）你只需要改这4项
+// ==============================================
+const GITHUB_CONFIG = {
+  OWNER: "你的GitHub用户名",
+  REPO: "你的仓库名",
+  PATH: "data.json",
+  TOKEN: "你的GitHub Token"
+};
+
+// 以下全部自动，不用动
+const API_BASE = `https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${GITHUB_CONFIG.PATH}`;
+const PRESET_PATH = "preset.json";
+const PRESET_API = `https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${PRESET_PATH}`;
+
+function vibrateShort() {
+  if (navigator.vibrate) navigator.vibrate(50);
+}
+const pinBtn = document.getElementById('pinBtn');
+let isLocked = false;
+let isDragging = false;
+let dragStartX = 0, dragStartY = 0;
+let initX = 0, initY = 0;
+let dragTimer = null;
+let lastScrollY = 0;
+pinBtn.style.color = '#28a745';
+
+function loadPinPosition() {
+  const pos = localStorage.getItem('pin_position');
+  if (pos) {
+    const { x, y } = JSON.parse(pos);
+    pinBtn.style.left = x + 'px';
+    pinBtn.style.top = y + 'px';
+    pinBtn.style.right = 'auto';
+    pinBtn.style.bottom = 'auto';
+  }
+}
+function savePinPosition(x, y) {
+  localStorage.setItem('pin_position', JSON.stringify({ x, y }));
+}
+loadPinPosition();
+
+pinBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (isDragging) return;
+  toggleLock();
+});
+pinBtn.addEventListener('touchstart', (e) => {
+  if (isLocked) return;
+  clearTimeout(dragTimer);
+  isDragging = false;
+  const touch = e.touches[0];
+  dragStartX = touch.clientX;
+  dragStartY = touch.clientY;
+  const rect = pinBtn.getBoundingClientRect();
+  initX = rect.left;
+  initY = rect.top;
+  dragTimer = setTimeout(() => {
+    isDragging = true;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+  }, 150);
+});
+document.addEventListener('touchmove', (e) => {
+  if (!isDragging || isLocked) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  let x = initX + (t.clientX - dragStartX);
+  let y = initY + (t.clientY - dragStartY);
+  x = Math.max(0, Math.min(window.innerWidth - pinBtn.offsetWidth, x));
+  y = Math.max(0, Math.min(window.innerHeight - pinBtn.offsetHeight, y));
+  pinBtn.style.left = x + 'px';
+  pinBtn.style.top = y + 'px';
+  pinBtn.style.right = 'auto';
+  pinBtn.style.bottom = 'auto';
+}, { passive: false });
+document.addEventListener('touchend', () => {
+  clearTimeout(dragTimer);
+  if (isDragging) {
+    savePinPosition(parseInt(pinBtn.style.left), parseInt(pinBtn.style.top));
+  }
+  document.body.style.overflow = '';
+  document.body.style.touchAction = '';
+  setTimeout(() => { isDragging = false; }, 100);
+});
+function toggleLock() {
+  isLocked = !isLocked;
+  if (isLocked) {
+    lastScrollY = window.scrollY;
+    document.documentElement.classList.add('lock-scroll');
+    document.body.classList.add('lock-scroll');
+    document.body.style.top = -lastScrollY + 'px';
+    pinBtn.innerText = '📍'; pinBtn.style.color = '#ff0000';
+  } else {
+    document.documentElement.classList.remove('lock-scroll');
+    document.body.classList.remove('lock-scroll');
+    document.body.style.top = ''; window.scrollTo(0, lastScrollY);
+    pinBtn.innerText = '📌'; pinBtn.style.color = '#28a745';
+  }
+}
+
+let historyPanelOpen = false, archivePanelOpen = false;
+let playerBoxOpen = false, scoreBoxOpen = false, presetBoxOpen = false;
+let currentRoundStartTime = Date.now();
+let searchKeyword = "", manageOpen = false;
+let tempEditNames = [];
+let totalPlayers = 0, flippedCount = 0;
+
+const initData = {
+  playerNum:3, names:["玩家1","玩家2","玩家3"],
+  total:[0,0,0], round:[0,0,0], roundNum:1,
+  history:[], scoreGears:[1,-1,3], selectGearIndex:0,
+  fullArchive:[], playerScoreMap:{}
+};
+
+let data = JSON.parse(JSON.stringify(initData));
+let curAddVal = data.scoreGears[data.selectGearIndex];
+let presetList = [];
+
+// ==============================================
+// 工具：从GitHub读取文件
+// ==============================================
+async function githubGet(url) {
+  const res = await fetch(url, {
+    headers: { Authorization: `token ${GITHUB_CONFIG.TOKEN}` }
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const content = atob(json.content.replace(/\s/g, ""));
+  return { data: JSON.parse(content), sha: json.sha };
+}
+
+// ==============================================
+// 工具：写入GitHub文件
+// ==============================================
+async function githubPut(url, contentData, sha) {
+  const body = {
+    message: "更新记分数据",
+    content: btoa(JSON.stringify(contentData, null, 2)),
+    sha
+  };
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `token ${GITHUB_CONFIG.TOKEN}`
+    },
+    body: JSON.stringify(body)
+  });
+  return res.ok;
+}
+
+// ==============================================
+// 保存本地（保留本地缓存，加快加载）
+// ==============================================
+const saveData = () => localStorage.setItem("billard_fix_new", JSON.stringify(data));
+const savePresetStorage = () => localStorage.setItem("billard_preset", JSON.stringify(presetList));
+const genId = () => Date.now() + Math.random().toString(36).slice(2, 8);
+
+// ==============================================
+// 🔥 真上传云端
+// ==============================================
+async function uploadLocalToCloud() {
+  if (data.fullArchive.length === 0) {
+    alert("本地无归档可上传");
+    return;
+  }
+  const remote = await githubGet(API_BASE);
+  const ok = await githubPut(API_BASE, data, remote?.sha);
+  alert(ok ? "✅ 已上传到GitHub云端" : "❌ 上传失败");
+}
+
+// ==============================================
+// 🔥 真拉取云端
+// ==============================================
+async function syncCloudToLocal() {
+  const remote = await githubGet(API_BASE);
+  if (!remote) {
+    alert("云端无数据");
+    return;
+  }
+  data = remote.data;
+  saveData();
+  refreshAllView();
+  showArchive();
+  alert("✅ 已从GitHub同步数据");
+}
+
+// ==============================================
+// 预设云端同步
+// ==============================================
+async function uploadPresetToCloud() {
+  if (presetList.length === 0) {
+    alert("无预设可上传");
+    return;
+  }
+  const remote = await githubGet(PRESET_API);
+  const ok = await githubPut(PRESET_API, presetList, remote?.sha);
+  alert(ok ? "✅ 预设已上传云端" : "❌ 上传失败");
+}
+async function downloadPresetFromCloud() {
+  const remote = await githubGet(PRESET_API);
+  if (!remote) {
+    alert("云端无预设");
+    return;
+  }
+  presetList = remote.data;
+  savePresetStorage();
+  renderPresetList();
+  alert("✅ 已拉取云端预设");
+}
+
+// ======================
+// 以下逻辑完全不变，保持你原来的操作
+// ======================
+function togglePresetBox(){
+  presetBoxOpen = !presetBoxOpen;
+  if(presetBoxOpen){ playerBoxOpen = false; scoreBoxOpen = false; }
+  document.getElementById("presetWrap").classList.toggle("hide-panel", !presetBoxOpen);
+  document.getElementById("playerWrap").classList.toggle("hide-panel", !playerBoxOpen);
+  document.getElementById("scoreWrap").classList.toggle("hide-panel", !scoreBoxOpen);
+  document.getElementById("foldPresetIcon").innerText = presetBoxOpen ? "▼" : "▲";
+  document.getElementById("foldPlayerIcon").innerText = playerBoxOpen ? "▼" : "▲";
+  document.getElementById("foldScoreIcon").innerText = scoreBoxOpen ? "▼" : "▲";
+  renderPresetList();
+}
+function togglePlayerBox(){
+  playerBoxOpen = !playerBoxOpen;
+  if(playerBoxOpen){ presetBoxOpen = false; scoreBoxOpen = false; }
+  document.getElementById("playerWrap").classList.toggle("hide-panel", !playerBoxOpen);
+  document.getElementById("presetWrap").classList.toggle("hide-panel", !presetBoxOpen);
+  document.getElementById("scoreWrap").classList.toggle("hide-panel", !scoreBoxOpen);
+  document.getElementById("foldPlayerIcon").innerText = playerBoxOpen ? "▼" : "▲";
+  document.getElementById("foldPresetIcon").innerText = presetBoxOpen ? "▼" : "▲";
+  document.getElementById("foldScoreIcon").innerText = scoreBoxOpen ? "▼" : "▲";
+}
+function toggleScoreBox(){
+  scoreBoxOpen = !scoreBoxOpen;
+  if(scoreBoxOpen){ playerBoxOpen = false; presetBoxOpen = false; }
+  document.getElementById("scoreWrap").classList.toggle("hide-panel", !scoreBoxOpen);
+  document.getElementById("playerWrap").classList.toggle("hide-panel", !playerBoxOpen);
+  document.getElementById("presetWrap").classList.toggle("hide-panel", !presetBoxOpen);
+  document.getElementById("foldScoreIcon").innerText = scoreBoxOpen ? "▼" : "▲";
+  document.getElementById("foldPlayerIcon").innerText = playerBoxOpen ? "▼" : "▲";
+  document.getElementById("foldPresetIcon").innerText = presetBoxOpen ? "▼" : "▲";
+}
+function toggleManage(){
+  manageOpen = !manageOpen;
+  document.getElementById("manageDelWrap").style.display = manageOpen?"block":"none";
+  const btn = document.getElementById("manageBtn");
+  if(manageOpen){
+    btn.style.background = "#555";
+    btn.style.color = "#fff";
+  }else{
+    btn.style.background = "#ccc";
+    btn.style.color = "#333";
+  }
+}
+function toggleHistoryPanel(){
+  historyPanelOpen = !historyPanelOpen;
+  const box = document.getElementById("historyBox");
+  const txt = document.getElementById("historyPanelText");
+  if(historyPanelOpen){
+    box.classList.remove("hide-panel");
+    txt.innerText = "📜 收起本局封存临时记录";
+    showHistory();
+  } else {
+    box.classList.add("hide-panel");
+    txt.innerText = "📜 展开本局封存临时记录";
+  }
+}
+function toggleArchivePanel(){
+  archivePanelOpen = !archivePanelOpen;
+  const box = document.getElementById("archiveBox");
+  const txt = document.getElementById("archivePanelText");
+  if(archivePanelOpen){
+    box.classList.remove("hide-panel");
+    txt.innerText = "📁 收起永久归档查询";
+    showArchive();
+  } else {
+    box.classList.add("hide-panel");
+    txt.innerText = "📁 展开永久归档查询";
+  }
+}
+function renderScoreBtnArea(){
+  let h="";
+  for(let i=0;i<data.scoreGears.length;i++){
+    const c=i===data.selectGearIndex?"btn score-btn selected":"btn score-btn";
+    const v=data.scoreGears[i];
+    h+=`<button class="${c}" onclick="selectGear(${i})">${v>=0?"+":""}${v}</button>`;
+  }
+  document.getElementById("scoreBtnArea").innerHTML=h;
+}
+function refreshScoreGearView(){
+  let h="<p>档位设置：</p>";
+  for(let i=0;i<data.scoreGears.length;i++){
+    h+=`档位${i+1}:<input class="small-input" value="${data.scoreGears[i]}" onchange="changeGearVal(${i},this.value)">`;
+  }
+  document.getElementById("scoreGearEdit").innerHTML=h;
+  curAddVal=data.scoreGears[data.selectGearIndex];
+  document.getElementById("nowScore").innerText=curAddVal;
+  renderScoreBtnArea();
+  renderAddBtn();
+}
+function selectGear(idx){
+  data.selectGearIndex=idx;
+  saveData();
+  refreshScoreGearView();
+}
+function changeGearVal(idx,v){
+  let n=Math.max(-10,Math.min(10,parseInt(v)||0));
+  data.scoreGears[idx]=n;
+  saveData();
+  refreshScoreGearView();
+}
+function addScoreGear(){
+  if(data.scoreGears.length>=10){alert("最多10档");return;}
+  data.scoreGears.push(1);
+  saveData();
+  refreshScoreGearView();
+}
+function subScoreGear(){
+  if(data.scoreGears.length<=1){alert("至少1档");return;}
+  data.scoreGears.pop();
+  if(data.selectGearIndex>=data.scoreGears.length)data.selectGearIndex=data.scoreGears.length-1;
+  saveData();
+  refreshScoreGearView();
+}
+function initTempNames(){
+  tempEditNames=[...data.names];
+}
+function renderNameEdit(){
+  initTempNames();
+  let h="";
+  for(let i=0;i<data.playerNum;i++){
+    h+=`<div class="player-item">玩家${i+1}：<input value="${tempEditNames[i]}" oninput="tempNameInput(${i},this.value)"></div>`;
+  }
+  document.getElementById("nameEditArea").innerHTML=h;
+  document.getElementById("pCount").innerText=data.playerNum;
+}
+function tempNameInput(i,v){
+  tempEditNames[i]=v;
+}
+function startCardDraw(){
+  totalPlayers = data.playerNum;
+  flippedCount = 0;
+  document.getElementById("cardMask").style.display = "flex";
+  document.getElementById("closeCardBtn").style.display = "none";
+  document.getElementById("cardTitle").innerText = `共${totalPlayers}人，点击翻牌`;
+  let nums = Array.from({length:totalPlayers},(_,k)=>k+1);
+  nums.sort(()=>Math.random()-0.5);
+  const cardArea = document.getElementById("cardArea");
+  cardArea.innerHTML = "";
+  for(let i=0;i<totalPlayers;i++){
+    let card = document.createElement("div");
+    card.className = "card";
+    card.innerText = "?";
+    card.dataset.num = nums[i];
+    card.addEventListener("click",flipCard);
+    cardArea.appendChild(card);
+  }
+}
+function flipCard(e){
+  let card = e.target;
+  if(card.classList.contains("flipped")) return;
+  vibrateShort();
+  card.classList.add("flipped","disabled");
+  let num = parseInt(card.dataset.num);
+  card.innerText = num;
+  flippedCount++;
+  if(flippedCount >= 1){
+    document.getElementById("closeCardBtn").style.display = "block";
+  }
+}
+function closeCardPanel(){
+  document.getElementById("cardMask").style.display = "none";
+}
+let rankShow = false;
+let sortType = "win";
+let sortBtn = null;
+let menuVisible = false;
+function toggleRank(){
+  rankShow = !rankShow;
+  const ra = document.getElementById("rankArea");
+  ra.classList.toggle("hide-panel", !rankShow);
+  const btn = document.getElementById("rankBtn");
+  if(rankShow){
+    btn.style.background = "#00C853";
+    btn.style.color = "#fff";
+  }else{
+    btn.style.background = "#ccc";
+    btn.style.color = "#333";
+  }
+  if(rankShow) renderRank();
+}
+function renderRank(){
+  let playerMap = {};
+  data.fullArchive.forEach(arc=>{
+    arc.历史对局明细.forEach(r=>{
+      const scores = Object.values(r.本局得分固化);
+      const maxScore = Math.max(...scores);
+      for(let pName in r.本局得分固化){
+        if(!playerMap[pName]){
+          playerMap[pName] = {name:pName, win:0, round:0, time:0, currentStreak:0, maxStreak:0, lastIsWin:false};
+        }
+        const obj = playerMap[pName];
+        obj.round++;
+        const isWin = r.本局得分固化[pName] === maxScore && maxScore>0;
+        if(isWin){
+          obj.win++;
+          obj.lastIsWin = true;
+          obj.currentStreak++;
+          if(obj.currentStreak > obj.maxStreak) obj.maxStreak = obj.currentStreak;
+        } else {
+          obj.lastIsWin = false;
+          obj.currentStreak = 0;
+        }
+      }
+    });
+    arc.最终固化玩家.forEach(p=>{ if(playerMap[p]) playerMap[p].time += arc.全场总时长; });
+  });
+  let arr = Object.values(playerMap);
+  arr.forEach(a=>{ a.winRate = a.round>0 ? (a.win/a.round*100).toFixed(1) : 0; });
+  if(sortType==="win") arr.sort((a,b)=>b.winRate - a.winRate);
+  if(sortType==="round") arr.sort((a,b)=>b.round - a.round);
+  if(sortType==="time") arr.sort((a,b)=>b.time - a.time);
+  if(sortType==="streak") arr.sort((a,b)=>b.maxStreak - a.maxStreak);
+  const container = document.getElementById("rankArea");
+  container.innerHTML = "";
+  const head = document.createElement("div");
+  head.className = "stat-card";
+  head.style.display = "flex";
+  head.style.justifyContent = "space-between";
+  head.style.alignItems = "center";
+  head.innerHTML = `<strong>🏆 排行榜</strong>`;
+  container.appendChild(head);
+  const btn = document.createElement("button");
+  btn.className = "small-setting";
+  btn.innerText = "≡";
+  btn.style.marginLeft = "auto";
+  btn.onclick = (e)=>{ e.stopPropagation(); openSortMenu(btn); };
+  head.appendChild(btn);
+  if(arr.length===0){ container.innerHTML += "<p class='tip-text'>暂无数据</p>"; return; }
+  arr.forEach((it,i)=>{
+    let rankIcon = "";
+    if(i === 0) rankIcon = "🏅";
+    else if(i === 1) rankIcon = "🥈";
+    else if(i === 2) rankIcon = "🥉";
+    else rankIcon = (i + 1) + "、";
+    let valText = "";
+    if(sortType==="win") valText = it.winRate+"%";
+    if(sortType==="round") valText = it.round;
+    if(sortType==="time") valText = fmtSec(it.time);
+    if(sortType==="streak") valText = it.maxStreak+"连胜";
+    const item = document.createElement("div");
+    item.className = "rank-card";
+    item.onclick = ()=>openPlayerFullDetail(it.name);
+    item.innerHTML = `<span>${rankIcon} ${it.name}</span><span class='right'>${valText}</span>`;
+    container.appendChild(item);
+  });
+}
+function openSortMenu(btn){
+  const menu = document.getElementById("sortMenu");
+  sortBtn = btn;
+  document.querySelectorAll(".sort-item").forEach(el=>el.classList.remove("active"));
+  const tg = document.querySelector(`.sort-item[data-key="${sortType}"]`);
+  if(tg) tg.classList.add("active");
+  const r = btn.getBoundingClientRect();
+  menu.style.left = r.left + "px";
+  menu.style.top = (r.bottom + 5 + window.scrollY) + "px";
+  menu.style.display = "block";
+  menuVisible = true;
+}
+document.querySelectorAll(".sort-item").forEach(el=>{
+  el.addEventListener("click",(e)=>{
+    e.stopPropagation();
+    sortType = el.dataset.key;
+    document.getElementById("sortMenu").style.display = "none";
+    menuVisible = false;
+    renderRank();
+  });
+});
+document.addEventListener("click",(e)=>{
+  const menu = document.getElementById("sortMenu");
+  if(menuVisible && !menu.contains(e.target) && e.target !== sortBtn){
+    menu.style.display = "none";
+    menuVisible = false;
+  }
+});
+function openPlayerFullDetail(pName){
+  let totalRound = 0, winCnt = 0, totalTime = 0;
+  data.fullArchive.forEach(arc=>{
+    arc.历史对局明细.forEach(r=>{
+      if(r.本局得分固化.hasOwnProperty(pName)){
+        totalRound++;
+        const mx = Math.max(...Object.values(r.本局得分固化));
+        if(r.本局得分固化[pName]===mx && mx>0) winCnt++;
+      }
+    });
+    if(arc.最终固化玩家.includes(pName)) totalTime += arc.全场总时长;
+  });
+  const winRate = totalRound>0 ? (winCnt/totalRound*100).toFixed(1) : 0;
+  const html = `
+    <h2>${pName} 对战数据</h2>
+    <p style="text-align:left;font-size:18px;margin-top:10px">总局数：${totalRound}</p>
+    <p style="text-align:left;font-size:18px">胜场：${winCnt}</p>
+    <p style="text-align:left;font-size:18px">胜率：${winRate}%</p>
+    <div class="chart-box"><div class="chart-bar" style="width:${winRate}%"></div></div>
+    <p style="text-align:left;font-size:18px">总时长：${fmtSec(totalTime)}</p>
+  `;
+  document.getElementById("playerDetailContent").innerHTML=html;
+  document.getElementById("playerFullDetail").style.display="block";
+}
+function closePlayerDetail(){
+  document.getElementById("playerFullDetail").style.display="none";
+}
+function confirmPlayerChange(){
+  for(let i=0;i<tempEditNames.length;i++){
+    const n=tempEditNames[i];
+    if(/\s/.test(n)){alert("名字不能含空格");return;}
+    for(let j=i+1;j<tempEditNames.length;j++){
+      if(n===tempEditNames[j]){alert("名字重复");return;}
+    }
+  }
+  data.names=[...tempEditNames];
+  for(let i=0;i<data.playerNum;i++){
+    let s=0;
+    data.history.forEach(log=>{ if(log.本局得分固化 && log.本局得分固化[data.names[i]]) s+=log.本局得分固化[data.names[i]]; });
+    data.total[i]=s; data.round[i]=0;
+  }
+  saveData(); refreshAllView(); alert("修改已生效");
+}
+function addPlayer(){
+  if(data.playerNum>=6){alert("最多6人");return;}
+  let n=prompt("请输入新玩家名字（不含空格）");
+  if(!n || /\s/.test(n) || data.names.includes(n)){alert("名字不合法或重复");return;}
+  data.playerNum++; data.names.push(n);
+  let s=0; data.history.forEach(log=>{ if(log.本局得分固化 && log.本局得分固化[n]) s+=log.本局得分固化[n]; });
+  data.total.push(s); data.round.push(0);
+  saveData(); renderNameEdit(); refreshAllView();
+}
+function subPlayer(){
+  if(data.playerNum<=2){alert("最少2人");return;}
+  data.names.pop(); data.total.pop(); data.round.pop(); data.playerNum--;
+  saveData(); renderNameEdit(); refreshAllView();
+}
+function playerAdd(idx){
+  vibrateShort();
+  data.round[idx]+=curAddVal; data.total[idx]+=curAddVal;
+  saveData(); refreshAllView();
+}
+function renderTotalShow(){
+  let h=""; const maxVal=Math.max(...data.total);
+  data.names.forEach((name,i)=>{
+    const crown = (data.total[i]===maxVal && maxVal>0) ? "<span class='crown'>👑</span>" : "";
+    h+=`<p class="score-item">${crown}${name}：<strong>${data.total[i]}</strong> 分</p>`;
+  });
+  document.getElementById("totalArea").innerHTML=h;
+}
+function renderGameArea(){
+  let h=""; const maxVal=Math.max(...data.round);
+  data.names.forEach((name,i)=>{
+    const crown = (data.round[i]===maxVal && maxVal>0) ? "<span class='crown'>👑</span>" : "";
+    h+=`<p class="score-item">${crown}${name}：<strong>${data.round[i]}</strong> 分</p>`;
+  });
+  document.getElementById("roundScoreArea").innerHTML=h;
+}
+function renderAddBtn(){
+  let h="";
+  data.names.forEach((name,i)=>{
+    h+=`<button class="btn add-btn" onclick="playerAdd(${i})">${name} +${curAddVal}分</button>`;
+  });
+  document.getElementById("addBtnArea").innerHTML=h;
+}
+function refreshAllView(){
+  renderNameEdit(); renderTotalShow(); renderGameArea(); renderAddBtn();
+  renderScoreBtnArea(); refreshScoreGearView(); renderPresetList();
+}
+function endRound(){
+  const sec=Math.floor((Date.now()-currentRoundStartTime)/1000);
+  const snap={}; data.names.forEach(n=>snap[n]=data.round[data.names.indexOf(n)]||0);
+  data.history.push({局次:data.roundNum,耗时:sec,本局阵容固化:[...data.names],本局得分固化:snap});
+  alert(`第${data.roundNum}局已封存`);
+  data.round.fill(0); data.roundNum++; currentRoundStartTime=Date.now();
+  saveData(); refreshAllView();
+}
+function saveMatchArchive(){
+  if(data.history.length===0 && data.total.every(x=>x===0) && data.round.every(x===0)){
+    alert("请先进行对局再保存"); return;
+  }
+  if(!confirm("确定保存本场并重置？")) return;
+  if(data.round.some(v=>v>0)) endRound();
+  const allSec=data.history.reduce((s,it)=>s+it.耗时,0);
+  data.fullArchive.push({
+    id:genId(),归档时间:new Date().toLocaleString(),全场总局数:data.history.length,全场总时长:allSec,
+    最终固化玩家:[...data.names],最终固化总分:[...data.total],历史对局明细:[...data.history]
+  });
+  data.round.fill(0); data.total.fill(0); data.history=[]; data.roundNum=1; currentRoundStartTime=Date.now();
+  saveData(); refreshAllView(); alert("本场已归档");
+}
+function toggleDetail(uid){
+  const el=document.getElementById("detail_"+uid);
+  if(el) el.style.display = el.style.display==="none"?"block":"none";
+}
+function toggleDeleteUI(uid){
+  const delBtn = document.getElementById("delbtn_"+uid);
+  const arrowBtn = document.getElementById("toggleBtn_"+uid);
+  if(!delBtn || !arrowBtn) return;
+  if(delBtn.style.display === "none" || delBtn.style.display === ""){
+    delBtn.style.display = "inline-block";
+    arrowBtn.innerText = "<<";
+  }else{
+    delBtn.style.display = "none";
+    arrowBtn.innerText = ">>";
+  }
+}
+function togglePresetDeleteUI(pid){
+  const delBtn = document.getElementById("presetDelBtn_"+pid);
+  const arrowBtn = document.getElementById("presetArrowBtn_"+pid);
+  if(!delBtn || !arrowBtn) return;
+  if(delBtn.style.display === "none" || delBtn.style.display === ""){
+    delBtn.style.display = "inline-block";
+    arrowBtn.innerText = "<<";
+  }else{
+    delBtn.style.display = "none";
+    arrowBtn.innerText = ">>";
+  }
+}
+function delSingleArchive(id){
+  if(!confirm("确定删除该归档？"))return;
+  data.fullArchive = data.fullArchive.filter(x=>x.id!==id);
+  saveData();
+  if(archivePanelOpen) showArchive();
+}
+function clearAllArchive(){
+  if(!confirm("确定清空所有归档？此操作不可恢复！"))return;
+  data.fullArchive=[]; saveData();
+  if(archivePanelOpen) showArchive();
+}
+function fmtSec(s){ const m=Math.floor(s/60); return m+"分"+(s%60)+"秒"; }
+function doSearch(){
+  searchKeyword=document.getElementById("searchInput").value.trim();
+  if(archivePanelOpen) showArchive();
+}
+function resetSearch(){
+  searchKeyword=""; document.getElementById("searchInput").value="";
+  document.getElementById("statShow").innerHTML=""; rankShow=false;
+  document.getElementById("rankArea").classList.add("hide-panel");
+  document.getElementById("sortMenu").style.display="none";
+  document.getElementById("rankBtn").style.background = "#ccc";
+  document.getElementById("rankBtn").style.color = "#333";
+  showArchive();
+}
+function getAllArchivePlayer(arc){
+  const s=new Set();
+  arc.最终固化玩家.forEach(n=>s.add(n));
+  arc.历史对局明细.forEach(r=>r.本局阵容固化.forEach(n=>s.add(n)));
+  return Array.from(s);
+}
+function showArchive(){
+  let list=[...data.fullArchive];
+  let statHtml="";
+  if(searchKeyword){
+    const kw=searchKeyword.toLowerCase();
+    list=list.filter(a=>getAllArchivePlayer(a).some(n=>n.toLowerCase().includes(kw)));
+    let totalMatch=list.length, totalRound=0, win=0, totalSec=0, totalScore=0, maxSingle=0;
+    list.forEach(a=>{
+      a.历史对局明细.forEach(r=>{
+        totalRound++;
+        const sc=r.本局得分固化[searchKeyword]||0;
+        totalScore+=sc; if(sc>maxSingle) maxSingle=sc;
+        const mx=Math.max(...Object.values(r.本局得分固化));
+        if(sc===mx && mx>0) win++;
+      });
+      totalSec+=a.全场总时长;
+    });
+    const winRate=totalRound>0 ? (win/totalRound*100).toFixed(1) : 0;
+    const avgSec=totalRound>0 ? (totalSec/totalRound).toFixed(0) : 0;
+    const avgScore=totalRound>0 ? (totalScore/totalRound).toFixed(1) : 0;
+    statHtml=`
+    <div class="stat-card">
+      <h4>📊 ${searchKeyword} 统计</h4>
+      <p>场次：${totalMatch} 局数：${totalRound} 胜场：${win} 胜率：${winRate}%</p>
+      <div class="chart-box"><div class="chart-bar" style="width:${winRate}%"></div></div>
+      <p>总时长：${fmtSec(totalSec)} 场均：${fmtSec(Number(avgSec))}</p>
+      <p>总得分：${totalScore} 场均：${avgScore} 单局最高：${maxSingle}</p>
+    </div>`;
+  }
+  document.getElementById("statShow").innerHTML=statHtml;
+  let html=list.length?"":"<p class='tip-text'>暂无归档记录</p>";
+  list.forEach((arc,idx)=>{
+    const no=String(idx+1).padStart(2,'0'); const uid=arc.id;
+    const pair=[];
+    for(let i=0;i<arc.最终固化玩家.length;i++){
+      pair.push({name:arc.最终固化玩家[i], score:arc.最终固化总分[i]||0});
+    }
+    pair.sort((a,b)=>b.score-a.score);
+    const maxScore=Math.max(...arc.最终固化总分);
+    let scoreHtml="";
+    pair.forEach(x=>{
+      const c=(x.score===maxScore && maxScore>0)?"<span class='crown'>👑</span>":"";
+      scoreHtml+=`${c}${x.name}:${x.score}分　`;
+    });
+    html+=`
+    <div class="archive-item">
+      <h4>第${no}场 · ${arc.归档时间}</h4>
+      <p>${arc.全场总局数}局 · ${fmtSec(arc.全场总时长)}</p>
+      <p><strong>${scoreHtml}</strong></p>
+      <div class="archive-action-row">
+        <button class="toggle-detail-btn" onclick="toggleDetail('${uid}')">明细</button>
+        <button class="del-btn" id="delbtn_${uid}" style="display:none;" onclick="delSingleArchive('${uid}')">删除</button>
+        <button class="detail-toggle-btn" id="toggleBtn_${uid}" onclick="toggleDeleteUI('${uid}')">>></button>
+      </div>
+      <div id="detail_${uid}" class="detail-wrap">
+    `;
+    arc.历史对局明细.forEach((r,si)=>{
+      const ps=r.本局阵容固化;
+      const sl=ps.map(p=>({name:p, score:r.本局得分固化[p]||0}));
+      const mx=Math.max(...sl.map(it=>it.score));
+      html+=`<div class="round-item"><p>第${si+1}局 ${fmtSec(r.耗时)}</p><p>`;
+      sl.forEach(it=>{
+        const c=(it.score===mx && mx>0)?"<span class='crown'>👑</span>":"";
+        html+=`${c}${it.name}:${it.score}　`;
+      });
+      html+=`</p></div>`;
+    });
+    html+="</div></div>";
+  });
+  document.getElementById("archiveList").innerHTML=html;
+}
+function showHistory(){
+  let h=data.history.length?"":"<p class='tip-text'>暂无本局记录</p>";
+  data.history.forEach((r,i)=>{
+    const ps=r.本局阵容固化;
+    const sl=ps.map(p=>({name:p, score:r.本局得分固化[p]||0}));
+    const mx=Math.max(...sl.map(it=>it.score));
+    h+=`<div class="round-item">第${i+1}局 ${fmtSec(r.耗时)}｜`;
+    sl.forEach(it=>{
+      const c=(it.score===mx && mx>0)?"<span class='crown'>👑</span>":"";
+      h+=`${c}${it.name}:${it.score}分　`;
+    });
+    h+=`</div>`;
+  });
+  document.getElementById("historyList").innerHTML=h;
+}
+function saveCurrentToPreset(){
+  const name=prompt("请输入预设名称","预设"+(presetList.length+1));
+  if(!name || !name.trim())return;
+  const isNameExist = presetList.some(item => 
+    item.presetName.trim() === name.trim()
+  );
+  if (isNameExist) {
+    alert("该预设名称已存在，请使用其他名称！");
+    return;
+  }
+  presetList.push({
+    id:Date.now(), presetName:name.trim(), playerNum:data.playerNum,
+    names:[...data.names], scoreGears:[...data.scoreGears], selectGearIndex:data.selectGearIndex
+  });
+  savePresetStorage();
+  renderPresetList();
+  alert("预设已保存");
+}
+function loadPreset(id){
+  const p=presetList.find(x=>x.id===id); if(!p)return;
+  if(data.round.some(v=>v>0))endRound();
+  data.total=[]; data.round=[];
+  for(let i=0;i<p.playerNum;i++){ data.total.push(0); data.round.push(0); }
+  data.history=[]; data.roundNum=1; currentRoundStartTime=Date.now();
+  data.playerNum=p.playerNum; data.names=[...p.names];
+  data.scoreGears=[...p.scoreGears]; data.selectGearIndex=p.selectGearIndex!==undefined?p.selectGearIndex:0;
+  curAddVal=data.scoreGears[data.selectGearIndex];
+  saveData(); refreshAllView();
+  alert("已加载预设："+p.presetName);
+  presetBoxOpen = false;
+  document.getElementById("presetWrap").classList.add("hide-panel");
+  document.getElementById("foldPresetIcon").innerText = "▲";
+}
+function delPreset(id){
+  if(!confirm("确定删除该预设？"))return;
+  presetList=presetList.filter(x=>x.id!==id);
+  savePresetStorage(); renderPresetList();
+}
+function renamePreset(id,newName){
+  if(!newName || !newName.trim())return;
+  const isNameExist = presetList.some(item => 
+    item.id !== id && item.presetName.trim() === newName.trim()
+  );
+  if (isNameExist) {
+    alert("该预设名称已存在，请使用其他名称！");
+    renderPresetList();
+    return;
+  }
+  const p=presetList.find(x=>x.id===id);
+  if(p)p.presetName=newName.trim();
+  savePresetStorage();
+  renderPresetList();
+}
+function renderPresetList(){
+  let html=presetList.length?"":"<p class='tip-text'>暂无预设</p>";
+  html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+  presetList.forEach(item=>{
+    const pid=item.id;
+    html+=`
+    <div class="preset-item">
+      <input class="preset-rename-input" value="${item.presetName}" onchange="renamePreset(${pid},this.value)">
+      <div class="preset-action-row">
+        <button class="btn ctrl-btn" onclick="loadPreset(${pid})">加载</button>
+        <button class="del-btn" id="presetDelBtn_${pid}" style="display:none;" onclick="delPreset(${pid})">删除</button>
+        <button class="detail-toggle-btn" id="presetArrowBtn_${pid}" onclick="togglePresetDeleteUI(${pid})">>></button>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById("presetListArea").innerHTML=html;
+}
+const presetToolsBtn = document.getElementById("openPresetToolsBtn");
+const presetToolsMenu = document.getElementById("presetToolsMenu");
+let presetMenuOpen = false;
+presetToolsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  presetMenuOpen = !presetMenuOpen;
+  presetToolsMenu.style.display = presetMenuOpen ? "block" : "none";
+  presetToolsBtn.classList.toggle("preset-menu-open", presetMenuOpen);
+});
+document.addEventListener("click", () => {
+  presetMenuOpen = false;
+  presetToolsMenu.style.display = "none";
+  presetToolsBtn.classList.remove("preset-menu-open");
+});
+
+window.onload=async ()=>{
+  renderNameEdit();
+  refreshAllView();
+  renderPresetList();
+  const remote = await githubGet(API_BASE);
+  if(remote) {
+    data = remote.data;
+    saveData();
+    refreshAllView();
+    showArchive();
+  }
+};
+</script>
+</body>
+</html>
